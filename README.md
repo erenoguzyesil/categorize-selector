@@ -52,7 +52,7 @@ This function takes one `string` argument and returns an `Object`
   - `elements` — e.g. `html`
   - `ids` — e.g. `#first-item`
   - `pseudoClasses` — e.g. `:hover`
-  - `pseudoElements` - e.g. `::after`
+  - `pseudoElements` — e.g. `::after`
   
   The values of each key are `Array`s
 
