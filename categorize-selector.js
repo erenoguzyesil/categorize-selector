@@ -1,7 +1,7 @@
 class CategorizeSelector {
 
     // List of special characters and their corresponding names
-    #TOKENS = {
+    _TOKENS = {
         'elements': '',
         'classes': '.',
         'ids': '#',
@@ -13,52 +13,52 @@ class CategorizeSelector {
         'EOF': ';' // so we can determine when the selector ends
     }
 
-    #currentTokenName = 'elements';
-    #currentString = '';
-    #currentPseudoClass = '';
-    #currentAttributePair = [];
-    #properties = {};
+    _currentTokenName = 'elements';
+    _currentString = '';
+    _currentPseudoClass = '';
+    _currentAttributePair = [];
+    _properties = {};
 
-    #propertyExists(tokenName) {
-        return Object.keys(this.#properties).includes(tokenName);
+    _propertyExists(tokenName) {
+        return Object.keys(this._properties).includes(tokenName);
     }
 
     /**
      * 
-     * - Sets `#currentTokenName` to `tokenName`.
+     * - Sets `_currentTokenName` to `tokenName`.
      * - Ignores the 'SPACE' token.
-     * - Sets a new key in `#properties` called `tokenName` if
+     * - Sets a new key in `_properties` called `tokenName` if
      * `tokenName` does not exist as a key.
      * 
      * @param {string} tokenName 
      * @returns 
      */
-    #setCurrentToken(tokenName) {
-        this.#currentTokenName = tokenName;
+    _setCurrentToken(tokenName) {
+        this._currentTokenName = tokenName;
 
         if (tokenName == 'SPACE') return; // Ignore spaces.
 
-        // Making sure if `#properties` has the `tokenName` as a key.
+        // Making sure if `_properties` has the `tokenName` as a key.
         //
         // 'ATTRIBUTE_START', 'ATTRIBUTE_SEPERATOR' and 'ATTRIBUTE_END' tokens
         // aren't supposed to be keys, so they are ignored.
-        if (!this.#propertyExists(tokenName) && !(tokenName == 'ATTRIBUTE_START' || tokenName == 'ATTRIBUTE_SEPERATOR' || tokenName == 'ATTRIBUTE_END' || tokenName == 'COLON')) {
-            this.#properties[tokenName] = [];
+        if (!this._propertyExists(tokenName) && !(tokenName == 'ATTRIBUTE_START' || tokenName == 'ATTRIBUTE_SEPERATOR' || tokenName == 'ATTRIBUTE_END' || tokenName == 'COLON')) {
+            this._properties[tokenName] = [];
         }
 
         // If `tokenName` is 'ATTRIBUTE_START', we make sure if 'attributes' key
-        // exists in `#properties`, and add it if it does not exist.
+        // exists in `_properties`, and add it if it does not exist.
         if (tokenName == 'ATTRIBUTE_START') {
-            if (!this.#propertyExists('attributes')) {
-                this.#properties.attributes = [];
+            if (!this._propertyExists('attributes')) {
+                this._properties.attributes = [];
             }
         }
 
         // If `tokenName` is 'COLON', we make sure if 'pseudoClasses' key
-        // exists in `#properties`, and add it if it does not exist.
+        // exists in `_properties`, and add it if it does not exist.
         if (tokenName == 'COLON') {
-            if (!this.#propertyExists('pseudoClasses')) {
-                this.#properties.pseudoClasses = [];
+            if (!this._propertyExists('pseudoClasses')) {
+                this._properties.pseudoClasses = [];
             }
         }
     }
@@ -66,128 +66,128 @@ class CategorizeSelector {
     /**
      * - This method adds the previous token when a new token is processed
      * - Ignores 'ATTRIBUTE_START', 'ATTRIBUTE_SEPERATOR', 'SPACE' tokens.
-     * - When it meets 'ATTRIBUTE_END', it adds `#currentAttributePair`
-     * to `#properties.attributes`
+     * - When it meets 'ATTRIBUTE_END', it adds `_currentAttributePair`
+     * to `_properties.attributes`
      */
-    #addPreviousToken() {
+    _addPreviousToken() {
 
-        // The `#currentTokenName refers to the previous (before the upcoming) token`
+        // The `_currentTokenName refers to the previous (before the upcoming) token`
 
         // Ignoring 'ATTRIBUTE_START', 'ATTRIBUTE_SEPERATOR', 'SPACE' tokens
-        // If no string is read (#currentString === ''), it returns null.
-        if (this.#currentTokenName == 'ATTRIBUTE_START' || this.#currentTokenName == 'ATTRIBUTE_SEPERATOR' || this.#currentString === '' || this.#currentTokenName == 'SPACE') return;
+        // If no string is read (_currentString === ''), it returns null.
+        if (this._currentTokenName == 'ATTRIBUTE_START' || this._currentTokenName == 'ATTRIBUTE_SEPERATOR' || this._currentString === '' || this._currentTokenName == 'SPACE') return;
 
-        if (this.#currentTokenName == 'ATTRIBUTE_END') {
-            this.#properties.attributes.push(this.#currentAttributePair);
-        } else if (this.#currentTokenName == 'DOUBLE_COLON') { // for `::something-else`
-            if (!this.#propertyExists('pseudoElements')) {
-                this.#properties.pseudoElements = [];
+        if (this._currentTokenName == 'ATTRIBUTE_END') {
+            this._properties.attributes.push(this._currentAttributePair);
+        } else if (this._currentTokenName == 'DOUBLE_COLON') { // for `::something-else`
+            if (!this._propertyExists('pseudoElements')) {
+                this._properties.pseudoElements = [];
             }
 
-            this.#properties.pseudoElements.push(this.#currentString);
+            this._properties.pseudoElements.push(this._currentString);
         } else {
-            if (this.#currentTokenName == 'COLON') {
-                this.#currentPseudoClass = this.#currentString;
-                this.#properties.pseudoClasses.push(this.#currentString);
+            if (this._currentTokenName == 'COLON') {
+                this._currentPseudoClass = this._currentString;
+                this._properties.pseudoClasses.push(this._currentString);
             } else {
-                this.#currentPseudoClass = '';
-                this.#properties[this.#currentTokenName].push(this.#currentString);
+                this._currentPseudoClass = '';
+                this._properties[this._currentTokenName].push(this._currentString);
             }
         }
 
-        this.#currentString = '';
-        this.#currentAttributePair = [];
+        this._currentString = '';
+        this._currentAttributePair = [];
     }
 
-    #analyzeSelector(selector) {
+    _analyzeSelector(selector) {
         for (let i = 0; i < selector.length; i++) {
             let char = selector.charAt(i);
 
             switch (char) {
-                case this.#TOKENS.classes:
-                    this.#addPreviousToken();
-                    this.#setCurrentToken('classes');
+                case this._TOKENS.classes:
+                    this._addPreviousToken();
+                    this._setCurrentToken('classes');
                     break;
 
-                case this.#TOKENS.ids:
-                    this.#addPreviousToken();
-                    this.#setCurrentToken('ids');
+                case this._TOKENS.ids:
+                    this._addPreviousToken();
+                    this._setCurrentToken('ids');
                     break;
 
-                case this.#TOKENS.COLON:
-                    if (this.#currentTokenName == 'COLON') { // If the `#currentTokenName` is already set to
+                case this._TOKENS.COLON:
+                    if (this._currentTokenName == 'COLON') { // If the `_currentTokenName` is already set to
                                                              // 'colons' (for when `::selector` is used)
-                        this.#currentTokenName = 'DOUBLE_COLON';
+                        this._currentTokenName = 'DOUBLE_COLON';
                     } else {
-                        this.#addPreviousToken();
-                        this.#setCurrentToken('COLON');
+                        this._addPreviousToken();
+                        this._setCurrentToken('COLON');
                     }
                     break;
 
-                case this.#TOKENS.ATTRIBUTE_START:
-                    this.#addPreviousToken();
-                    this.#setCurrentToken('ATTRIBUTE_START');
+                case this._TOKENS.ATTRIBUTE_START:
+                    this._addPreviousToken();
+                    this._setCurrentToken('ATTRIBUTE_START');
                     break;
 
-                case this.#TOKENS.ATTRIBUTE_SEPERATOR:
-                    this.#setCurrentToken('ATTRIBUTE_SEPERATOR');
-                    this.#currentAttributePair.push(this.#currentString);
-                    this.#currentString = '';
+                case this._TOKENS.ATTRIBUTE_SEPERATOR:
+                    this._setCurrentToken('ATTRIBUTE_SEPERATOR');
+                    this._currentAttributePair.push(this._currentString);
+                    this._currentString = '';
                     break;
 
-                case this.#TOKENS.ATTRIBUTE_END:
-                    this.#setCurrentToken('ATTRIBUTE_END');
-                    this.#currentAttributePair.push(this.#currentString);
+                case this._TOKENS.ATTRIBUTE_END:
+                    this._setCurrentToken('ATTRIBUTE_END');
+                    this._currentAttributePair.push(this._currentString);
                     break;
 
                 // Here, we do not add arguments of pseudo-class functions that start with
-                // 'nth' For example, in `:nth-child(7n+5)` we do not add '7n+5' to `#properties`
+                // 'nth' For example, in `:nth-child(7n+5)` we do not add '7n+5' to `_properties`
                 case '(':
                 case ')':
                 case '+':
-                    if (this.#currentPseudoClass.startsWith('nth')) {
-                        this.#currentString = '';
+                    if (this._currentPseudoClass.startsWith('nth')) {
+                        this._currentString = '';
                     } else {
-                        this.#addPreviousToken();
+                        this._addPreviousToken();
                     }
 
-                    this.#setCurrentToken('SPACE');
+                    this._setCurrentToken('SPACE');
                     break;
 
                 case ',':
                 case '>':
                 case '~':
-                case this.#TOKENS.SPACE:
-                    this.#addPreviousToken();
-                    this.#setCurrentToken('SPACE');
+                case this._TOKENS.SPACE:
+                    this._addPreviousToken();
+                    this._setCurrentToken('SPACE');
                     break;
 
-                case this.#TOKENS.EOF:
-                    this.#addPreviousToken();
+                case this._TOKENS.EOF:
+                    this._addPreviousToken();
                     break;
 
                 default:
-                    this.#currentString = this.#currentString.concat(char);
+                    this._currentString = this._currentString.concat(char);
 
-                    if (this.#currentTokenName == 'elements' || this.#currentTokenName == 'SPACE') {
-                        this.#setCurrentToken('elements');
+                    if (this._currentTokenName == 'elements' || this._currentTokenName == 'SPACE') {
+                        this._setCurrentToken('elements');
                     }
             }
         }
 
         let properties2 = {};
 
-        // Removing duplicates from the values (arrays) of `#properties`
-        for (let key in this.#properties) {
-            if (this.#properties[key].length == 0) continue;
+        // Removing duplicates from the values (arrays) of `_properties`
+        for (let key in this._properties) {
+            if (this._properties[key].length == 0) continue;
 
             if (!Object.keys(properties2).includes(key)) {
                 properties2[key] = [];
             }
 
-            for (let i = 0; i < this.#properties[key].length; i++) {
-                if (!properties2[key].includes(this.#properties[key][i])) {
-                    properties2[key].push(this.#properties[key][i]);
+            for (let i = 0; i < this._properties[key].length; i++) {
+                if (!properties2[key].includes(this._properties[key][i])) {
+                    properties2[key].push(this._properties[key][i]);
                 }
             }
         }
@@ -197,7 +197,7 @@ class CategorizeSelector {
 
     getProperties(selector) {
         if (selector.trim() === '') return {};
-        return this.#analyzeSelector(selector.trim() + ';');
+        return this._analyzeSelector(selector.trim() + ';');
     }
 }
 
