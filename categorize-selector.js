@@ -66,8 +66,8 @@ class CategorizeSelector {
     /**
      * - This method adds the previous token when a new token is processed
      * - Ignores 'ATTRIBUTE_START', 'ATTRIBUTE_SEPERATOR', 'SPACE' tokens.
-     * - When it meets 'ATTRIBUTE_END', it adds `#properties.attributes`
-     * the `#currentAttributePair`
+     * - When it meets 'ATTRIBUTE_END', it adds `#currentAttributePair`
+     * to `#properties.attributes`
      */
     #addPreviousToken() {
 
