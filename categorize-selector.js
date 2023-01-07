@@ -115,12 +115,14 @@ class CategorizeSelector {
                     break;
 
                 case this._TOKENS.COLON:
-                    if (this._currentTokenName == 'COLON') { // If the `_currentTokenName` is already set to
-                                                             // 'colons' (for when `::selector` is used)
+                    if (this._currentTokenName == 'COLON' && this._currentString == '') {
+                                                             // If the `_currentTokenName` is already set to
+                                                             // 'COLON' (for when `::selector` is used)
                         this._currentTokenName = 'DOUBLE_COLON';
                     } else {
                         this._addPreviousToken();
                         this._setCurrentToken('COLON');
+                        this._currentPseudoClass = '';
                     }
                     break;
 
