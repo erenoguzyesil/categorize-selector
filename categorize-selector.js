@@ -25,9 +25,10 @@ class CategorizeSelector {
 
     /**
      * 
-     * - Changes `#currentTokenName` to `tokenName`.
-     * - Ignores spaces.
-     * - Creates a new key in `#properties` if it's the first time `tokenName` is met.
+     * - Sets `#currentTokenName` to `tokenName`.
+     * - Ignores the 'SPACE' token.
+     * - Sets a new key in `#properties` called `tokenName` if
+     * `tokenName` does not exist as a key.
      * 
      * @param {string} tokenName 
      * @returns 
@@ -37,22 +38,24 @@ class CategorizeSelector {
 
         if (tokenName == 'SPACE') return; // Ignore spaces.
 
-        // Making sure if `#properties` has this tokenName as a key.
+        // Making sure if `#properties` has the `tokenName` as a key.
         //
-        // 'ATTRIBUTE_START', 'ATTRIBUTE_SEPERATOR' and 'ATTRIBUTE_END'
-        // tokens aren't supposed to be keys, so they are ignored.
+        // 'ATTRIBUTE_START', 'ATTRIBUTE_SEPERATOR' and 'ATTRIBUTE_END' tokens
+        // aren't supposed to be keys, so they are ignored.
         if (!this.#propertyExists(tokenName) && !(tokenName == 'ATTRIBUTE_START' || tokenName == 'ATTRIBUTE_SEPERATOR' || tokenName == 'ATTRIBUTE_END' || tokenName == 'COLON')) {
             this.#properties[tokenName] = [];
         }
 
-        // If the token is 'ATTRIBUTE_START', we make sure if 'attributes' key
-        // exists in `#properties`, and add it if it doesn't exist.
+        // If `tokenName` is 'ATTRIBUTE_START', we make sure if 'attributes' key
+        // exists in `#properties`, and add it if it does not exist.
         if (tokenName == 'ATTRIBUTE_START') {
             if (!this.#propertyExists('attributes')) {
                 this.#properties.attributes = [];
             }
         }
 
+        // If `tokenName` is 'COLON', we make sure if 'pseudoClasses' key
+        // exists in `#properties`, and add it if it does not exist.
         if (tokenName == 'COLON') {
             if (!this.#propertyExists('pseudoClasses')) {
                 this.#properties.pseudoClasses = [];
@@ -62,34 +65,33 @@ class CategorizeSelector {
 
     /**
      * - This method adds the previous token when a new token is processed
-     * - Ignores 'ATTRIBUTE_START', 'ATTRIBUTE_SEPERATOR', 'SPACE' token names.
+     * - Ignores 'ATTRIBUTE_START', 'ATTRIBUTE_SEPERATOR', 'SPACE' tokens.
      * - When it meets 'ATTRIBUTE_END', it adds `#properties.attributes`
      * the `#currentAttributePair`
-     * - Therefore, every `#currentAttributePair` consists of two elements
      */
     #addPreviousToken() {
 
+        // The `#currentTokenName refers to the previous (before the upcoming) token`
+
         // Ignoring 'ATTRIBUTE_START', 'ATTRIBUTE_SEPERATOR', 'SPACE' tokens
-        // If no string is read (#currentString === ''), it doesn't run.
+        // If no string is read (#currentString === ''), it returns null.
         if (this.#currentTokenName == 'ATTRIBUTE_START' || this.#currentTokenName == 'ATTRIBUTE_SEPERATOR' || this.#currentString === '' || this.#currentTokenName == 'SPACE') return;
 
         if (this.#currentTokenName == 'ATTRIBUTE_END') {
             this.#properties.attributes.push(this.#currentAttributePair);
-        } else if (this.#currentTokenName == 'DOUBLE_COLON') { // for `::selector`
+        } else if (this.#currentTokenName == 'DOUBLE_COLON') { // for `::something-else`
             if (!this.#propertyExists('pseudoElements')) {
                 this.#properties.pseudoElements = [];
             }
 
             this.#properties.pseudoElements.push(this.#currentString);
         } else {
-            let string = this.#currentString;
-
             if (this.#currentTokenName == 'COLON') {
                 this.#currentPseudoClass = this.#currentString;
-                this.#properties.pseudoClasses.push(string);
-            } else { 
+                this.#properties.pseudoClasses.push(this.#currentString);
+            } else {
                 this.#currentPseudoClass = '';
-                this.#properties[this.#currentTokenName].push(string);
+                this.#properties[this.#currentTokenName].push(this.#currentString);
             }
         }
 
@@ -106,40 +108,40 @@ class CategorizeSelector {
                     this.#addPreviousToken();
                     this.#setCurrentToken('classes');
                     break;
-                
+
                 case this.#TOKENS.ids:
                     this.#addPreviousToken();
                     this.#setCurrentToken('ids');
                     break;
-                
+
                 case this.#TOKENS.COLON:
                     if (this.#currentTokenName == 'COLON') { // If the `#currentTokenName` is already set to
-                                                              // 'colons' (for when `::selector` is used)
+                                                             // 'colons' (for when `::selector` is used)
                         this.#currentTokenName = 'DOUBLE_COLON';
                     } else {
                         this.#addPreviousToken();
                         this.#setCurrentToken('COLON');
                     }
-                    break;                
-                
+                    break;
+
                 case this.#TOKENS.ATTRIBUTE_START:
                     this.#addPreviousToken();
                     this.#setCurrentToken('ATTRIBUTE_START');
                     break;
-                
+
                 case this.#TOKENS.ATTRIBUTE_SEPERATOR:
                     this.#setCurrentToken('ATTRIBUTE_SEPERATOR');
                     this.#currentAttributePair.push(this.#currentString);
                     this.#currentString = '';
                     break;
-                
+
                 case this.#TOKENS.ATTRIBUTE_END:
                     this.#setCurrentToken('ATTRIBUTE_END');
                     this.#currentAttributePair.push(this.#currentString);
                     break;
-                
-                // Here, we do not add specific numbers in selectors that start with
-                // 'nth' For example, `:nth-child(7n+5)` we do not add '7n+5' to `#properties`
+
+                // Here, we do not add arguments of pseudo-class functions that start with
+                // 'nth' For example, in `:nth-child(7n+5)` we do not add '7n+5' to `#properties`
                 case '(':
                 case ')':
                 case '+':
@@ -151,19 +153,19 @@ class CategorizeSelector {
 
                     this.#setCurrentToken('SPACE');
                     break;
-                
+
                 case ',':
                 case '>':
-                case '~': 
+                case '~':
                 case this.#TOKENS.SPACE:
                     this.#addPreviousToken();
                     this.#setCurrentToken('SPACE');
                     break;
-                
+
                 case this.#TOKENS.EOF:
                     this.#addPreviousToken();
                     break;
-                
+
                 default:
                     this.#currentString = this.#currentString.concat(char);
 
@@ -175,14 +177,14 @@ class CategorizeSelector {
 
         let properties2 = {};
 
-        // Removing duplicates from the values of `#properties`
+        // Removing duplicates from the values (arrays) of `#properties`
         for (let key in this.#properties) {
             if (this.#properties[key].length == 0) continue;
-            
+
             if (!Object.keys(properties2).includes(key)) {
                 properties2[key] = [];
             }
-                
+
             for (let i = 0; i < this.#properties[key].length; i++) {
                 if (!properties2[key].includes(this.#properties[key][i])) {
                     properties2[key].push(this.#properties[key][i]);
