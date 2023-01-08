@@ -13,12 +13,12 @@ You can use this tool to get the categories of a CSS selector in a single `Objec
 
 You can install this into your computer using `curl` in the command line:
 ```
-curl -LJO https://cdn.jsdelivr.net/gh/erenoguzyesil/categorize-selector@master/categorize-selector.min.js
+curl -LJO https://cdn.jsdelivr.net/gh/erenoguzyesil/categorize-selector@latest/categorize-selector.min.js
 ```
 
 You can insert this to your HTML code using CDN:
 ```
-<script src="https://cdn.jsdelivr.net/gh/erenoguzyesil/categorize-selector@master/categorize-selector.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/erenoguzyesil/categorize-selector@latest/categorize-selector.min.js"></script>
 ```
 
 ## Example
