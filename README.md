@@ -2,13 +2,6 @@
 
 You can use this tool to get the categories of a CSS selector in a single `Object`
 
-## Table of Contents
-
-* [Installing](#installing)
-* [An Example](#example)
-* [Usage](#usage)
-  * [categorizeSelector(selector) function](#categorizeselectorselector-function)
-
 ## Installing
 
 You can install this into your computer using `curl` in the command line:
