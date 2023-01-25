@@ -2,7 +2,7 @@
 
 `categorize-selector` is a JS tool that includes the functionality that displays the properties of a CSS selector value grouped by its type of selectors as an Object. 
 
-To use this tool, see the [example below](#example) and call the [`categorizeSelector(selector)`](#categorizeselectorselector-function) function where `selector` is the CSS selector value.
+To use this functionality — first [install](#installing) it, then see the [example](#example).
 
 ## Installing
 
@@ -35,40 +35,34 @@ The code above returns:
 }
 ```
 
-## Usage
+## Notes
 
-### `categorizeSelector(selector)` function
+- The `categorizeSelector(selector)` function takes one `string` argument as `selector` and returns an `Object`
 
-This function takes one `string` argument and returns an `Object`
-
-#### Notes
-The possible keys of what this function returns include:
-  - `attributes` — e.g. `[type=input]`
-  - `classes` — e.g. `.blue-large-btn`
-  - `elements` — e.g. `html`
-  - `ids` — e.g. `#first-item`
-  - `pseudoClasses` — e.g. `:hover`
-  - `pseudoElements` — e.g. `::after`
+- The possible keys of the returned `Object` include
+  - `attributes (key=value)`
+  - `classes (.class)`
+  - `elements (element)`
+  - `ids (#id)`
+  - `pseudoClasses (:hover)`
+  - `pseudoElements (::after)`
   
-The value of each key are `Array`s
+- The value of each key is an `Array`
 
-If the name of a pseudo-class function (e.g. `:has(), :is(), :nth-child()`) starts with `nth` (e.g. `:nth-child(), :nth-type()`), then the arguments of that function (e.g. `:nth-child(2n+1)`) are ignored and not displayed in the result.
+- If the name of a pseudo-element function (`:is(...), :has(...), :nth-child(...)`) starts with `nth` (`:nth-child(), :nth-type()`), the argument of that function is not displayed.
 
+**Example:**
 ```js
-categorizeSelector('input:nth-child(odd)');
+let x = categorizeSelector(":nth-child(even)");
 
-/*
-Returns:
+// The value of `x` doesn't include the word `even`:
 
 {
-  elements: 'input',
-  pseudoClasses: 'nth-child'
+  pseudoClasses: ['nth-child']
 }
 
-The word 'odd' is ignored.
-*/
 ```
 
-The `+~,()> ` operators are ignored.
+- The `+~,()>` characters are not displayed.
 
-Attribute pairs are displayed in arrays. 
+- Attribute pairs are put in arrays (e.g. `['type', 'input']`)
