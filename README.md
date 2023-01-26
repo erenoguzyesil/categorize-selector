@@ -4,6 +4,8 @@
 
 To use this functionality — first [install](#installing) it, then see the [example](#example).
 
+Also, take a look at [demo](https://erenoguzyesil.github.io/categorize-selector/).
+
 ## Installing
 
 You can install the main script file (`categorize-selector.min.js`) into your computer using `curl` in the command line (1.0.1 version):
