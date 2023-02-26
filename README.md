@@ -1,8 +1,6 @@
 # categorize-selector
 
-`categorize-selector` is a Javascript tool that can break a complex CSS selector into pieces by grouping it in key-value pairs.
-
-Take a look at the [demo](https://erenoguzyesil.github.io/categorize-selector/).
+A JavaScript tool that can break a complex CSS selector into pieces by grouping it in key-value pairs.
 
 ## Installing
 
