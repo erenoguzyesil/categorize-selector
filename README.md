@@ -1,19 +1,17 @@
 # categorize-selector
 
-`categorize-selector` is a JS tool that includes the functionality that displays the properties of a CSS selector value grouped by its type of selectors as an Object. 
+`categorize-selector` is a Javascript tool that can break a complex CSS selector into pieces by grouping it in key-value pairs.
 
-To use this functionality — first [install](#installing) it, then see the [example](#example).
-
-Also, take a look at [demo](https://erenoguzyesil.github.io/categorize-selector/).
+Take a look at the [demo](https://erenoguzyesil.github.io/categorize-selector/).
 
 ## Installing
 
-You can install the main script file (`categorize-selector.min.js`) into your computer using `curl` in the command line (1.0.1 version):
+Install the script file (`categorize-selector.min.js`) into your computer using `curl` in the command line (1.0.1 version):
 ```
 curl -LJO https://cdn.jsdelivr.net/gh/erenoguzyesil/categorize-selector@1.0.1/categorize-selector.min.js
 ```
 
-You can insert it to your HTML code using CDN:
+Or insert it to your HTML code using CDN:
 ```
 <script src="https://cdn.jsdelivr.net/gh/erenoguzyesil/categorize-selector@1.0.1/categorize-selector.min.js"></script>
 ```
