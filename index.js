@@ -1,208 +1,229 @@
-class CategorizeSelector {
+const TokenType = Object.freeze({
+  ELEMENT: 0,
+  CLASS: 1,
+  ID: 2,
+  PSEUDO_ELEMENT: 3, // e.g. ::before
+  PSEUDO_CLASS: 4, // e.g. :hover
+  ATTRIBUTE: 5,
+});
 
-    // List of special characters and their corresponding names
-    _TOKENS = {
-        'elements': '',
-        'classes': '.',
-        'ids': '#',
-        'COLON': ':',
-        'ATTRIBUTE_START': '[',
-        'ATTRIBUTE_SEPERATOR': '=',
-        'ATTRIBUTE_END': ']',
-        'SPACE': ' ',
-        'EOF': ';' // so we can determine when the selector ends
-    }
+class Token {
+  constructor(type, lexeme) {
+    this.type = type;
 
-    _currentTokenName = 'elements';
-    _currentString = '';
-    _currentPseudoClass = '';
-    _currentAttributePair = [];
-    _properties = {};
+    // 'lexeme' normally refers to a string of characters inside a token,
+    // but in this code, it can also refer to a key-value Object for attribute pairs.
+    this.lexeme = lexeme;
+  }
+}
 
-    _propertyExists(tokenName) {
-        return Object.keys(this._properties).includes(tokenName);
-    }
+class Scanner {
+  #input;
+  #lexemeStartIndex = -1;
+  #lexemeCurrentIndex = -1;
+  #tokens = [];
 
-    /**
-     * 
-     * - Sets `_currentTokenName` to `tokenName`.
-     * - Ignores the 'SPACE' token.
-     * - Sets a new key in `_properties` called `tokenName` if
-     * `tokenName` does not exist as a key.
-     * 
-     * @param {string} tokenName 
-     * @returns 
-     */
-    _setCurrentToken(tokenName) {
-        this._currentTokenName = tokenName;
+  constructor(input) {
+    this.#input = input;
+  }
 
-        if (tokenName == 'SPACE') return; // Ignore spaces.
+  #characterToTokenType = {
+    '.': TokenType.CLASS,
+    '#': TokenType.ID,
+  };
 
-        // Making sure if `_properties` has the `tokenName` as a key.
-        //
-        // 'ATTRIBUTE_START', 'ATTRIBUTE_SEPERATOR' and 'ATTRIBUTE_END' tokens
-        // aren't supposed to be keys, so they are ignored.
-        if (!this._propertyExists(tokenName) && !(tokenName == 'ATTRIBUTE_START' || tokenName == 'ATTRIBUTE_SEPERATOR' || tokenName == 'ATTRIBUTE_END' || tokenName == 'COLON')) {
-            this._properties[tokenName] = [];
+  scan() {
+    while (!this.#isAtEnd()) {
+      this.#startNewLexeme();
+      let character = this.#input.charAt(this.#lexemeCurrentIndex);
+
+      switch (character) {
+        case '.':
+        case '#': {
+          let tokenType = this.#characterToTokenType[character];
+
+          while (this.#isNextCharacterAlphaNumeric()) {
+            this.#lexemeCurrentIndex += 1;
+          }
+
+          this.#addToken(
+            tokenType,
+            this.#input.substring(this.#lexemeStartIndex + 1, this.#lexemeCurrentIndex + 1)
+          );
+          break;
         }
 
-        // If `tokenName` is 'ATTRIBUTE_START', we make sure if 'attributes' key
-        // exists in `_properties`, and add it if it does not exist.
-        if (tokenName == 'ATTRIBUTE_START') {
-            if (!this._propertyExists('attributes')) {
-                this._properties.attributes = [];
+        case ':': {
+          let tokenType = TokenType.PSEUDO_CLASS;
+          let indexIncrement = 1; // to remove the prefix (: or ::) from the pseudo-element/pseudo-class
+
+          do {
+            if (this.#checkNextCharacter(':')) {
+              tokenType = TokenType.PSEUDO_ELEMENT;
+              indexIncrement = 2;
             }
+
+            this.#lexemeCurrentIndex += 1;
+          } while (this.#isNextCharacterAlphaNumeric());
+
+          let lexeme = this.#input.substring(
+            this.#lexemeStartIndex + indexIncrement,
+            this.#lexemeCurrentIndex + 1
+          );
+
+          if (
+            tokenType === TokenType.PSEUDO_CLASS &&
+            lexeme.toLowerCase().startsWith('nth') &&
+            this.#checkNextCharacter('(')
+          ) {
+            this.#lexemeCurrentIndex += 1;
+
+            while (!this.#checkNextCharacter(')') && !this.#isAtEnd()) {
+              this.#lexemeCurrentIndex += 1;
+            }
+          }
+
+          this.#addToken(tokenType, lexeme);
+
+          break;
         }
 
-        // If `tokenName` is 'COLON', we make sure if 'pseudoClasses' key
-        // exists in `_properties`, and add it if it does not exist.
-        if (tokenName == 'COLON') {
-            if (!this._propertyExists('pseudoClasses')) {
-                this._properties.pseudoClasses = [];
+        case '[': {
+          let attributePair = { key: '', value: '' };
+
+          while (!this.#checkNextCharacter(']') && !this.#isAtEnd()) {
+            this.#lexemeCurrentIndex += 1;
+
+            if (this.#input.charAt(this.#lexemeCurrentIndex) === '=') {
+              attributePair.key = this.#input
+                .substring(this.#lexemeStartIndex + 1, this.#lexemeCurrentIndex)
+                .trim();
+
+              // To start scanning the part after the '=' sign in an attribute pair, ([key=value])
+              // we set `#lexemeStartIndex` to the index of the '=' sign (#lexemeCurrentIndex)
+              // and continue scanning until the next character is '['.
+              this.#lexemeStartIndex = this.#lexemeCurrentIndex;
             }
+          }
+
+          attributePair.value = this.#input
+            .substring(this.#lexemeStartIndex + 1, this.#lexemeCurrentIndex + 1)
+            .trim();
+
+          // When there is no = sign in the attribute selector, `attributePair.key` is empty. (e.g. [disabled])
+          // So, we set `key` to `value` (e.g. [disabled] becomes [disabled=disabled]).
+          if (attributePair.key === '') {
+            attributePair.key = attributePair.value;
+          }
+
+          this.#addToken(TokenType.ATTRIBUTE, Object.freeze(attributePair));
+          break;
         }
+
+        default: {
+          let characterCode = this.#input.charCodeAt(this.#lexemeCurrentIndex);
+
+          if (this.#isAlphaNumeric(characterCode)) {
+            while (this.#isNextCharacterAlphaNumeric()) {
+              this.#lexemeCurrentIndex += 1;
+            }
+
+            this.#addToken(
+              TokenType.ELEMENT,
+              this.#input.substring(this.#lexemeStartIndex, this.#lexemeCurrentIndex + 1)
+            );
+          }
+        }
+      }
+    }
+  }
+
+  #isAtEnd() {
+    return this.#lexemeCurrentIndex + 1 >= this.#input.length;
+  }
+
+  #startNewLexeme() {
+    this.#lexemeCurrentIndex += 1;
+    this.#lexemeStartIndex = this.#lexemeCurrentIndex;
+  }
+
+  #addToken(tokenType, lexeme) {
+    if (tokenType !== TokenType.ATTRIBUTE && lexeme.trim() === '') return false;
+
+    if (tokenType === TokenType.ATTRIBUTE && (lexeme.key === '' || lexeme.value === '')) {
+      return false;
     }
 
-    /**
-     * - This method adds the previous token when a new token is processed
-     * - Ignores 'ATTRIBUTE_START', 'ATTRIBUTE_SEPERATOR', 'SPACE' tokens.
-     * - When it meets 'ATTRIBUTE_END', it adds `_currentAttributePair`
-     * to `_properties.attributes`
-     */
-    _addPreviousToken() {
+    this.#tokens.push(new Token(tokenType, lexeme));
+  }
 
-        // The `_currentTokenName refers to the previous (before the upcoming) token`
+  #checkNextCharacter(expectedCharacter) {
+    if (this.#isAtEnd()) return false;
 
-        // Ignoring 'ATTRIBUTE_START', 'ATTRIBUTE_SEPERATOR', 'SPACE' tokens
-        // If no string is read (_currentString === ''), it returns null.
-        if (this._currentTokenName == 'ATTRIBUTE_START' || this._currentTokenName == 'ATTRIBUTE_SEPERATOR' || this._currentString === '' || this._currentTokenName == 'SPACE') return;
+    return this.#input.charAt(this.#lexemeCurrentIndex + 1) === expectedCharacter;
+  }
 
-        if (this._currentTokenName == 'ATTRIBUTE_END') {
-            this._properties.attributes.push(this._currentAttributePair);
-        } else if (this._currentTokenName == 'DOUBLE_COLON') { // for `::something-else`
-            if (!this._propertyExists('pseudoElements')) {
-                this._properties.pseudoElements = [];
-            }
+  // also returns true if the character is a hyphen or an underscore
+  #isAlphaNumeric(characterCode) {
+    return (
+      (characterCode > 47 && characterCode < 58) || // [0-9]
+      (characterCode > 64 && characterCode < 91) || // [A-Z]
+      (characterCode > 96 && characterCode < 123) || // [a-z]
+      characterCode === 45 || // - (hyphen)
+      characterCode === 95 // _ (underscore)
+    );
+  }
 
-            this._properties.pseudoElements.push(this._currentString);
-        } else {
-            if (this._currentTokenName == 'COLON') {
-                this._currentPseudoClass = this._currentString;
-                this._properties.pseudoClasses.push(this._currentString);
-            } else {
-                this._currentPseudoClass = '';
-                this._properties[this._currentTokenName].push(this._currentString);
-            }
-        }
+  #isNextCharacterAlphaNumeric() {
+    if (this.#isAtEnd()) return false;
 
-        this._currentString = '';
-        this._currentAttributePair = [];
+    let nextCharacterCode = this.#input.charCodeAt(this.#lexemeCurrentIndex + 1);
+
+    return this.#isAlphaNumeric(nextCharacterCode);
+  }
+
+  #prettifyTokenType(tokenTypeName) {
+    let name = tokenTypeName.toString().toLowerCase();
+
+    if (tokenTypeName.startsWith('PSEUDO')) {
+      name = name.replace('_', '');
+      name = name.substring(0, 6) + name[6].toUpperCase() + name.substring(7);
     }
 
-    _analyzeSelector(selector) {
-        for (let i = 0; i < selector.length; i++) {
-            let char = selector.charAt(i);
-
-            switch (char) {
-                case this._TOKENS.classes:
-                    this._addPreviousToken();
-                    this._setCurrentToken('classes');
-                    break;
-
-                case this._TOKENS.ids:
-                    this._addPreviousToken();
-                    this._setCurrentToken('ids');
-                    break;
-
-                case this._TOKENS.COLON:
-                    if (this._currentTokenName == 'COLON' && this._currentString == '') {
-                                                             // If the `_currentTokenName` is already set to
-                                                             // 'COLON' (for when `::selector` is used)
-                        this._currentTokenName = 'DOUBLE_COLON';
-                    } else {
-                        this._addPreviousToken();
-                        this._setCurrentToken('COLON');
-                        this._currentPseudoClass = '';
-                    }
-                    break;
-
-                case this._TOKENS.ATTRIBUTE_START:
-                    this._addPreviousToken();
-                    this._setCurrentToken('ATTRIBUTE_START');
-                    break;
-
-                case this._TOKENS.ATTRIBUTE_SEPERATOR:
-                    this._setCurrentToken('ATTRIBUTE_SEPERATOR');
-                    this._currentAttributePair.push(this._currentString);
-                    this._currentString = '';
-                    break;
-
-                case this._TOKENS.ATTRIBUTE_END:
-                    this._setCurrentToken('ATTRIBUTE_END');
-                    this._currentAttributePair.push(this._currentString);
-                    break;
-
-                // Here, we do not add arguments of pseudo-class functions that start with
-                // 'nth' For example, in `:nth-child(7n+5)` we do not add '7n+5' to `_properties`
-                case '(':
-                case ')':
-                case '+':
-                    if (this._currentPseudoClass.startsWith('nth')) {
-                        this._currentString = '';
-                    } else {
-                        this._addPreviousToken();
-                    }
-
-                    this._setCurrentToken('SPACE');
-                    break;
-
-                case ',':
-                case '>':
-                case '~':
-                case this._TOKENS.SPACE:
-                    this._addPreviousToken();
-                    this._setCurrentToken('SPACE');
-                    break;
-
-                case this._TOKENS.EOF:
-                    this._addPreviousToken();
-                    break;
-
-                default:
-                    this._currentString = this._currentString.concat(char);
-
-                    if (this._currentTokenName == 'elements' || this._currentTokenName == 'SPACE') {
-                        this._setCurrentToken('elements');
-                    }
-            }
-        }
-
-        let properties2 = {};
-
-        // Removing duplicates from the values (arrays) of `_properties`
-        for (let key in this._properties) {
-            if (this._properties[key].length == 0) continue;
-
-            if (!Object.keys(properties2).includes(key)) {
-                properties2[key] = [];
-            }
-
-            for (let i = 0; i < this._properties[key].length; i++) {
-                if (!properties2[key].includes(this._properties[key][i])) {
-                    properties2[key].push(this._properties[key][i]);
-                }
-            }
-        }
-
-        return properties2;
+    // Making it plural
+    if (tokenTypeName.endsWith('CLASS')) {
+      name += 'es';
+    } else {
+      name += 's';
     }
 
-    getProperties(selector) {
-        if (selector.trim() === '') return {};
-        return this._analyzeSelector(selector.trim() + ';');
+    return name;
+  }
+
+  categorize() {
+    this.scan();
+
+    let selectors = {};
+
+    for (let tokenTypeName of Object.keys(TokenType)) {
+      selectors[this.#prettifyTokenType(tokenTypeName)] = [];
     }
+
+    for (let token of this.#tokens) {
+      // `token.type` returns an integer as defined in `cs_TokenType` Object,
+      // and the keys of `selectors` Object are ordered in the same way as `cs_TokenType`,
+      // so `Object.keys(selectors)[token.type]` returns the suitable key of `selectors`
+      // based on `token.type`.
+      selectors[Object.keys(selectors)[token.type]].push(token.lexeme);
+    }
+
+    return selectors;
+  }
 }
 
 function categorizeSelector(selector) {
-    return new CategorizeSelector().getProperties(selector);
+  let scanner = new Scanner(selector);
+  return scanner.categorize();
 }
+
+module.exports = categorizeSelector;
