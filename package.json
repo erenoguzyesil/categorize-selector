@@ -1,0 +1,12 @@
+{
+  "name": "categorize-selector",
+  "version": "1.1.0",
+  "description": "Break down a CSS selector into categories (elements, classes, ids, etc.)!",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["css", "js", "html", "selector"],
+  "author": "erenoguzyesil",
+  "license": "MIT"
+}
