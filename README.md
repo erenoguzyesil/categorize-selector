@@ -20,7 +20,7 @@ If you installed using NPM, require the package in your code and call it:
 
 ```js
 const categorizeSelector = require('categorize-selector');
-categorizeSelector("...your selector goes here...")
+categorizeSelector("...your selector goes here...");
 ```
 
 Example:
