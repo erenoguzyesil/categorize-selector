@@ -20,7 +20,6 @@ class Token {
 class Scanner {
   constructor(input) {
     this._input = input;
-    this._input;
     this._lexemeStartIndex = -1;
     this._lexemeCurrentIndex = -1;
     this._tokens = [];
