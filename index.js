@@ -18,37 +18,36 @@ class Token {
 }
 
 class Scanner {
-  #input;
-  #lexemeStartIndex = -1;
-  #lexemeCurrentIndex = -1;
-  #tokens = [];
-
   constructor(input) {
-    this.#input = input;
+    this._input = input;
+    this._input;
+    this._lexemeStartIndex = -1;
+    this._lexemeCurrentIndex = -1;
+    this._tokens = [];
   }
 
-  #characterToTokenType = {
+  _characterToTokenType = {
     '.': TokenType.CLASS,
     '#': TokenType.ID,
   };
 
   scan() {
-    while (!this.#isAtEnd()) {
-      this.#startNewLexeme();
-      let character = this.#input.charAt(this.#lexemeCurrentIndex);
+    while (!this._isAtEnd()) {
+      this._startNewLexeme();
+      let character = this._input.charAt(this._lexemeCurrentIndex);
 
       switch (character) {
         case '.':
         case '#': {
-          let tokenType = this.#characterToTokenType[character];
+          let tokenType = this._characterToTokenType[character];
 
-          while (this.#isNextCharacterAlphaNumeric()) {
-            this.#lexemeCurrentIndex += 1;
+          while (this._isNextCharacterAlphaNumeric()) {
+            this._lexemeCurrentIndex += 1;
           }
 
-          this.#addToken(
+          this._addToken(
             tokenType,
-            this.#input.substring(this.#lexemeStartIndex + 1, this.#lexemeCurrentIndex + 1)
+            this._input.substring(this._lexemeStartIndex + 1, this._lexemeCurrentIndex + 1)
           );
           break;
         }
@@ -58,32 +57,32 @@ class Scanner {
           let indexIncrement = 1; // to remove the prefix (: or ::) from the pseudo-element/pseudo-class
 
           do {
-            if (this.#checkNextCharacter(':')) {
+            if (this._checkNextCharacter(':')) {
               tokenType = TokenType.PSEUDO_ELEMENT;
               indexIncrement = 2;
             }
 
-            this.#lexemeCurrentIndex += 1;
-          } while (this.#isNextCharacterAlphaNumeric());
+            this._lexemeCurrentIndex += 1;
+          } while (this._isNextCharacterAlphaNumeric());
 
-          let lexeme = this.#input.substring(
-            this.#lexemeStartIndex + indexIncrement,
-            this.#lexemeCurrentIndex + 1
+          let lexeme = this._input.substring(
+            this._lexemeStartIndex + indexIncrement,
+            this._lexemeCurrentIndex + 1
           );
 
           if (
             tokenType === TokenType.PSEUDO_CLASS &&
             lexeme.toLowerCase().startsWith('nth') &&
-            this.#checkNextCharacter('(')
+            this._checkNextCharacter('(')
           ) {
-            this.#lexemeCurrentIndex += 1;
+            this._lexemeCurrentIndex += 1;
 
-            while (!this.#checkNextCharacter(')') && !this.#isAtEnd()) {
-              this.#lexemeCurrentIndex += 1;
+            while (!this._checkNextCharacter(')') && !this._isAtEnd()) {
+              this._lexemeCurrentIndex += 1;
             }
           }
 
-          this.#addToken(tokenType, lexeme);
+          this._addToken(tokenType, lexeme);
 
           break;
         }
@@ -91,23 +90,23 @@ class Scanner {
         case '[': {
           let attributePair = { key: '', value: '' };
 
-          while (!this.#checkNextCharacter(']') && !this.#isAtEnd()) {
-            this.#lexemeCurrentIndex += 1;
+          while (!this._checkNextCharacter(']') && !this._isAtEnd()) {
+            this._lexemeCurrentIndex += 1;
 
-            if (this.#input.charAt(this.#lexemeCurrentIndex) === '=') {
-              attributePair.key = this.#input
-                .substring(this.#lexemeStartIndex + 1, this.#lexemeCurrentIndex)
+            if (this._input.charAt(this._lexemeCurrentIndex) === '=') {
+              attributePair.key = this._input
+                .substring(this._lexemeStartIndex + 1, this._lexemeCurrentIndex)
                 .trim();
 
               // To start scanning the part after the '=' sign in an attribute pair, ([key=value])
-              // we set `#lexemeStartIndex` to the index of the '=' sign (#lexemeCurrentIndex)
+              // we set `_lexemeStartIndex` to the index of the '=' sign (_lexemeCurrentIndex)
               // and continue scanning until the next character is '['.
-              this.#lexemeStartIndex = this.#lexemeCurrentIndex;
+              this._lexemeStartIndex = this._lexemeCurrentIndex;
             }
           }
 
-          attributePair.value = this.#input
-            .substring(this.#lexemeStartIndex + 1, this.#lexemeCurrentIndex + 1)
+          attributePair.value = this._input
+            .substring(this._lexemeStartIndex + 1, this._lexemeCurrentIndex + 1)
             .trim();
 
           // When there is no = sign in the attribute selector, `attributePair.key` is empty. (e.g. [disabled])
@@ -116,21 +115,21 @@ class Scanner {
             attributePair.key = attributePair.value;
           }
 
-          this.#addToken(TokenType.ATTRIBUTE, Object.freeze(attributePair));
+          this._addToken(TokenType.ATTRIBUTE, Object.freeze(attributePair));
           break;
         }
 
         default: {
-          let characterCode = this.#input.charCodeAt(this.#lexemeCurrentIndex);
+          let characterCode = this._input.charCodeAt(this._lexemeCurrentIndex);
 
-          if (this.#isAlphaNumeric(characterCode)) {
-            while (this.#isNextCharacterAlphaNumeric()) {
-              this.#lexemeCurrentIndex += 1;
+          if (this._isAlphaNumeric(characterCode)) {
+            while (this._isNextCharacterAlphaNumeric()) {
+              this._lexemeCurrentIndex += 1;
             }
 
-            this.#addToken(
+            this._addToken(
               TokenType.ELEMENT,
-              this.#input.substring(this.#lexemeStartIndex, this.#lexemeCurrentIndex + 1)
+              this._input.substring(this._lexemeStartIndex, this._lexemeCurrentIndex + 1)
             );
           }
         }
@@ -138,33 +137,33 @@ class Scanner {
     }
   }
 
-  #isAtEnd() {
-    return this.#lexemeCurrentIndex + 1 >= this.#input.length;
+  _isAtEnd() {
+    return this._lexemeCurrentIndex + 1 >= this._input.length;
   }
 
-  #startNewLexeme() {
-    this.#lexemeCurrentIndex += 1;
-    this.#lexemeStartIndex = this.#lexemeCurrentIndex;
+  _startNewLexeme() {
+    this._lexemeCurrentIndex += 1;
+    this._lexemeStartIndex = this._lexemeCurrentIndex;
   }
 
-  #addToken(tokenType, lexeme) {
+  _addToken(tokenType, lexeme) {
     if (tokenType !== TokenType.ATTRIBUTE && lexeme.trim() === '') return false;
 
     if (tokenType === TokenType.ATTRIBUTE && (lexeme.key === '' || lexeme.value === '')) {
       return false;
     }
 
-    this.#tokens.push(new Token(tokenType, lexeme));
+    this._tokens.push(new Token(tokenType, lexeme));
   }
 
-  #checkNextCharacter(expectedCharacter) {
-    if (this.#isAtEnd()) return false;
+  _checkNextCharacter(expectedCharacter) {
+    if (this._isAtEnd()) return false;
 
-    return this.#input.charAt(this.#lexemeCurrentIndex + 1) === expectedCharacter;
+    return this._input.charAt(this._lexemeCurrentIndex + 1) === expectedCharacter;
   }
 
   // also returns true if the character is a hyphen or an underscore
-  #isAlphaNumeric(characterCode) {
+  _isAlphaNumeric(characterCode) {
     return (
       (characterCode > 47 && characterCode < 58) || // [0-9]
       (characterCode > 64 && characterCode < 91) || // [A-Z]
@@ -174,15 +173,15 @@ class Scanner {
     );
   }
 
-  #isNextCharacterAlphaNumeric() {
-    if (this.#isAtEnd()) return false;
+  _isNextCharacterAlphaNumeric() {
+    if (this._isAtEnd()) return false;
 
-    let nextCharacterCode = this.#input.charCodeAt(this.#lexemeCurrentIndex + 1);
+    let nextCharacterCode = this._input.charCodeAt(this._lexemeCurrentIndex + 1);
 
-    return this.#isAlphaNumeric(nextCharacterCode);
+    return this._isAlphaNumeric(nextCharacterCode);
   }
 
-  #prettifyTokenType(tokenTypeName) {
+  _prettifyTokenType(tokenTypeName) {
     let name = tokenTypeName.toString().toLowerCase();
 
     if (tokenTypeName.startsWith('PSEUDO')) {
@@ -206,10 +205,10 @@ class Scanner {
     let selectors = {};
 
     for (let tokenTypeName of Object.keys(TokenType)) {
-      selectors[this.#prettifyTokenType(tokenTypeName)] = [];
+      selectors[this._prettifyTokenType(tokenTypeName)] = [];
     }
 
-    for (let token of this.#tokens) {
+    for (let token of this._tokens) {
       // `token.type` returns an integer as defined in `cs_TokenType` Object,
       // and the keys of `selectors` Object are ordered in the same way as `cs_TokenType`,
       // so `Object.keys(selectors)[token.type]` returns the suitable key of `selectors`
