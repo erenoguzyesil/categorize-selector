@@ -30,7 +30,7 @@ class Scanner {
     };  
   }
 
-  scan() {
+  _scan() {
     while (!this._isAtEnd()) {
       this._startNewLexeme();
       let character = this._input.charAt(this._lexemeCurrentIndex);
@@ -199,7 +199,7 @@ class Scanner {
   }
 
   categorize() {
-    this.scan();
+    this._scan();
 
     let selectors = {};
 
