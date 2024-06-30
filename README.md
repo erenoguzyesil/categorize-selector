@@ -20,7 +20,7 @@ If you installed using NPM, require the package in your code and call it:
 
 ```js
 const categorizeSelector = require('categorize-selector');
-categorizeSelector("...your selector goes here...");
+categorizeSelector('...your selector goes here...');
 ```
 
 Example:
@@ -52,7 +52,7 @@ categories.attributes; //=> [ {key: "disabled", value: "disabled"} ]
 If you installed using CDN, just call the `categorizeSelector(...)` function in a script connected to your HTML document.
 
 ```js
-categorizeSelector("...your selector goes here...");
+categorizeSelector('...your selector goes here...');
 ```
 
 Example:
@@ -60,7 +60,7 @@ Example:
 ```js
 const cs = categorizeSelector;
 
-cs(".blue.rounded");
+cs('.blue.rounded');
 /* ^ returns:
 {
   ...,
