@@ -1,66 +1,72 @@
 # categorize-selector
 
-A JavaScript tool that can break a complex CSS selector into pieces by grouping it in key-value pairs.
+Break down a CSS selector into categories including elements, classes, IDs, pseudo-elements, pseudo-classes, and attributes!
 
 ## Installing
 
-Install the script file (`categorize-selector.min.js`) into your computer using `curl` in the command line (1.0.1 version):
+Install using NPM:
 ```
-curl -LJO https://cdn.jsdelivr.net/gh/erenoguzyesil/categorize-selector@1.0.1/categorize-selector.min.js
-```
-
-Or insert it to your HTML code using CDN:
-```
-<script src="https://cdn.jsdelivr.net/gh/erenoguzyesil/categorize-selector@1.0.1/categorize-selector.min.js"></script>
+npm install categorize-selector
 ```
 
-## Example
+Or insert this code into your HTML document using CDN:
+```html
+<script src="https://cdn.jsdelivr.net/gh/erenoguzyesil/categorize-selector@master/index-cdn.min.js"></script>
+```
+
+## Usage
+
+If you installed using NPM, require the package in your code and call it:
 
 ```js
-let mySelector = 'main.container ul li#first input#number.large[type=number]';
-categorizeSelector(mySelector);
+const categorizeSelector = require('categorize-selector');
+categorizeSelector('...your selector goes here...');
 ```
 
-The code above returns:
+Example:
+
 ```js
+const cs = require('categorize-selector');
+
+let selector = 'body section#second button.rounded-blue[disabled]:hover';
+let categories = cs(selector);
+
+categories;
+/* ^ returns:
 {
-  attributes: [
-    ['type', 'number']
-  ],
-  classes: ['container', 'large'],
-  elements: ['main', 'ul', 'li', 'input'],
-  ids: ['first', 'number']
+  "elements": ["body", "section", "button"],
+  "classes": ["rounded-blue"],
+  "ids": ["second"],
+  "pseudoElements": [],
+  "pseudoClasses": ["hover"],
+  "attributes": [ {key: "disabled", value: "disabled"} ]
 }
+*/
+
+categories.elements; //=> ["body", "section", "blue"]
+categories.classes; //=> ["rounded-blue"]
+categories.ids; //=> ["#second"]
+categories.attributes; //=> [ {key: "disabled", value: "disabled"} ]
 ```
 
-## Notes
+If you installed using CDN, just call the `categorizeSelector(...)` function in a script connected to your HTML document.
 
-- The `categorizeSelector(selector)` function takes one `string` argument as `selector` and returns an `Object`
-
-- The possible keys of the returned `Object` include
-  - `attributes (key=value)`
-  - `classes (.class)`
-  - `elements (element)`
-  - `ids (#id)`
-  - `pseudoClasses (:hover)`
-  - `pseudoElements (::after)`
-  
-- The value of each key is an `Array`
-
-- If the name of a pseudo-element function (`:is(...), :has(...), :nth-child(...)`) starts with `nth` (`:nth-child(), :nth-type()`), the argument of that function is not displayed.
-
-**Example:**
 ```js
-let x = categorizeSelector(":nth-child(even)");
-
-// The value of `x` doesn't include the word `even`:
-
-{
-  pseudoClasses: ['nth-child']
-}
-
+categorizeSelector('...your selector goes here...');
 ```
 
-- The `+~,()>` characters are not displayed.
+Example:
 
-- Attribute pairs are put in arrays (e.g. `['type', 'input']`)
+```js
+const cs = categorizeSelector;
+
+cs('.blue.rounded');
+/* ^ returns:
+{
+  ...,
+  "classes": ["blue", "rounded"],
+  ...
+}
+*/
+
+```
