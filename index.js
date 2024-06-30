@@ -23,12 +23,12 @@ class Scanner {
     this._lexemeStartIndex = -1;
     this._lexemeCurrentIndex = -1;
     this._tokens = [];
+    
+    this._characterToTokenType = {
+      '.': TokenType.CLASS,
+      '#': TokenType.ID,
+    };  
   }
-
-  _characterToTokenType = {
-    '.': TokenType.CLASS,
-    '#': TokenType.ID,
-  };
 
   scan() {
     while (!this._isAtEnd()) {
