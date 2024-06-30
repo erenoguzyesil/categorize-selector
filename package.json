@@ -1,10 +1,14 @@
 {
   "name": "categorize-selector",
   "version": "1.1.0",
-  "description": "Break down a CSS selector into categories (elements, classes, ids, etc.)!",
+  "description": "Break down a CSS selector into categories (elements, classes, ids, and more)!",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/erenoguzyesil/categorize-selector.git"
   },
   "keywords": ["css", "js", "html", "selector"],
   "author": "erenoguzyesil",
