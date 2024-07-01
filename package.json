@@ -1,6 +1,6 @@
 {
   "name": "categorize-selector",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Break down a CSS selector into categories (elements, classes, ids, and more)!",
   "main": "index.js",
   "scripts": {
